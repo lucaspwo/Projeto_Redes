@@ -5,7 +5,7 @@ import socket, os
 global conectado
 global clientes
 
-class cliente(object):
+class cliente(object):  #classe que vai guardar o socket, o nick e o endereco
     def __init__(self,client_connection,nick,address):
         self.client_socket = client_connection
         self.nick = nick
@@ -42,13 +42,14 @@ class recebeMsgCliente (threading.Thread):
 class enviaMsgCliente(threading.Thread):
     def __init__(self,cl,mensagem,nome):
         threading.Thread.__init__(self)
-        #self.serverSocket = serverSocket
         self.client = Cl
         self.msg = mensagem
         self.nick = nome
     # a funcao run() e executada por padrao por cada thread
     def run(self):
         global clientes
+        #percorre a lista global de clientes e envia a mensagem para todos
+        #menos para quem escreveu a mensagem
         for i in clientes:
             if i.nick != self.nick:
                 i.client_socket.send(self.msg)
@@ -58,14 +59,15 @@ class fechaServidor (threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
     def __init__(self):
         threading.Thread.__init__(self)
-        #self.serverSocket = serverSocket
     # a funcao run() e executada por padrao por cada thread
     def run(self):
-        #ouvir o que o servidor vai mandar e imprimir em tela
+        #se o servidor mandar sair() envia para todos os clientes
+        #e fecha a conexao
         msg = raw_input()
-        for i in clientes:
-            i.client_socket.send(msg)
-            i.client_socket.close()
+        if msg == 'sair'
+            for i in clientes:
+                i.client_socket.send(msg)
+                i.client_socket.close()
 
 
 HOST = '' # ip do servidor (em branco)
