@@ -3,27 +3,33 @@ import re
 import socket, os
 
 global conectado
+global clientes
+
+class cliente(object):
+    def __init__(self,client_connection,nick,address):
+        self.client_socket = client_connection
+        self.nick = nick
+        self.address = address
 
 class recebeMsgCliente (threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
-    def __init__(self,client_connection,nick):
+    def __init__(self,Cl):
         threading.Thread.__init__(self)
         #self.serverSocket = serverSocket
-        self.client_connection = client_connection
-        self.nick = nick
+        self.client = Cl
     # a funcao run() e executada por padrao por cada thread
     def run(self):
         #ouvir o que o servidor vai mandar e imprimir em tela
-        print self.nick, 'entrou'
+        print self.client.nick, 'entrou'
         global conectado
         conectado = True
         while conectado:
-            msg = self.client_connection.recv(2048)
-            print self.nick, 'escreveu: ', msg
+            msg = self.client.client_socket.recv(2048)
+            print self.client.nick, 'escreveu: ', msg
             if msg == 'sair()':
-                self.client_connection.close()
+                self.client.client_connection.close()
                 conectado = False
-                print self.nick, 'saiu'
+                print self.client.nick, 'saiu'
 
 
 class enviaMsgCliente (threading.Thread):
@@ -37,6 +43,7 @@ class enviaMsgCliente (threading.Thread):
     def run(self):
         global conectado
         #ouvir o que o servidor vai mandar e imprimir em tela
+        print 'entrei na thread 2'
         conectado = True
         while conectado:
             msg = raw_input()
@@ -60,6 +67,8 @@ listen_socket.bind((HOST, PORT))
 # "escuta" pedidos na porta do socket do servidor
 listen_socket.listen(1)
 
+clientes = []
+
 print 'Servidor aguardando conexoes na porta %s ...' % PORT
 conectado = True
 while conectado == True:
@@ -68,9 +77,15 @@ while conectado == True:
     #fazendo o tratamento para obter o nome do cliente
     nome = re.sub('nome\(','',nick)
     nome = re.sub('\)','',nome)
+
+    #armazenar na lista de clientes a conexao que foi estabelecida
+    Cl = cliente(client_connection,nome,client_address)
+    clientes.append(Cl)
+
     #crie a thread de receber mensagens de cada cliente
-    thread1 = recebeMsgCliente(client_connection,nome)
+    thread1 = recebeMsgCliente(Cl)
     thread1.start()
+
     #crie a thead para enviar as mensagens para os clientes
     thread2 = enviaMsgCliente(client_connection,nome)
     thread2.start()

@@ -45,4 +45,4 @@ while conectado == True:
     if sentence == 'sair()':
         clientSocket.close()
         break
-clientSocket.close()
+# clientSocket.close()
