@@ -64,7 +64,7 @@ class fechaServidor (threading.Thread):
         #se o servidor mandar sair() envia para todos os clientes
         #e fecha a conexao
         msg = raw_input()
-        if msg == 'sair'
+        if msg == 'sair()':
             for i in clientes:
                 i.client_socket.send(msg)
                 i.client_socket.close()
