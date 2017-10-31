@@ -19,38 +19,53 @@ class recebeMsgCliente (threading.Thread):
         self.client = Cl
     # a funcao run() e executada por padrao por cada thread
     def run(self):
+        global clientes
         #ouvir o que o servidor vai mandar e imprimir em tela
         print self.client.nick, 'entrou'
+        # envia para todos os clientes: <nick> entrou
+        thread_enviar1 = enviaMsgCliente(self.client,self.client.nick+' entrou',self.client.nick)
+        thread_enviar1.start()
         global conectado
         conectado = True
         while conectado:
             msg = self.client.client_socket.recv(2048)
-            print self.client.nick, 'escreveu: ', msg
             if msg == 'sair()':
                 self.client.client_connection.close()
                 conectado = False
                 print self.client.nick, 'saiu'
+            print self.client.nick, 'escreveu: ', msg
 
+            # thread para enviar a mensagem recebida para todos os clientes
+            thread_enviar = enviaMsgCliente(self.client,self.client.nick + ' escreveu: ' + msg,self.client.nick)
+            thread_enviar.start()
 
-class enviaMsgCliente (threading.Thread):
-    # redefine a funcao __init__ para aceitar a passagem parametros de entrada
-    def __init__(self,client_connection,nick):
+class enviaMsgCliente(threading.Thread):
+    def __init__(self,cl,mensagem,nome):
         threading.Thread.__init__(self)
         #self.serverSocket = serverSocket
-        self.client_connection = client_connection
-        self.nick = nick
+        self.client = Cl
+        self.msg = mensagem
+        self.nick = nome
     # a funcao run() e executada por padrao por cada thread
     def run(self):
-        global conectado
+        global clientes
+        for i in clientes:
+            if i.nick != self.nick:
+                i.client_socket.send(self.msg)
+                
+
+class fechaServidor (threading.Thread):
+    # redefine a funcao __init__ para aceitar a passagem parametros de entrada
+    def __init__(self):
+        threading.Thread.__init__(self)
+        #self.serverSocket = serverSocket
+    # a funcao run() e executada por padrao por cada thread
+    def run(self):
         #ouvir o que o servidor vai mandar e imprimir em tela
-        print 'entrei na thread 2'
-        conectado = True
-        while conectado:
-            msg = raw_input()
-            if msg == 'sair()':
-                self.client_connection.send(msg)
-                self.client_connection.close()
-                conectado = False
+        msg = raw_input()
+        for i in clientes:
+            i.client_socket.send(msg)
+            i.client_socket.close()
 
 
 HOST = '' # ip do servidor (em branco)
@@ -87,7 +102,7 @@ while conectado == True:
     thread1.start()
 
     #crie a thead para enviar as mensagens para os clientes
-    thread2 = enviaMsgCliente(client_connection,nome)
+    thread2 = fechaServidor()
     thread2.start()
 
 
