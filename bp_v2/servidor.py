@@ -31,7 +31,6 @@ class recebeMsgCliente(threading.Thread):
             if self.chave in self.clientes:
                 try:
                     msg = self.clientes[self.chave]['socket'].recv(2048)
-                except:
                     if msg == 'sair()':
                         self.clientes[self.chave]['socket'].close()
                         conectado = False
@@ -47,10 +46,22 @@ class recebeMsgCliente(threading.Thread):
                         for i in self.clientes.keys():
                             lista = lista + self.clientes[i]['nick'] + '\t'
                         self.clientes[self.chave]['socket'].send(lista)
+                    elif msg[:5] == 'nome(':
+                        nvNome = re.sub('nome\(','',msg)
+                        nvNome = re.sub('\)','',nvNome)
+                        oldNome = self.clientes[self.chave]['nick']
+                        self.clientes[self.chave]['nick'] = nvNome
+                        print oldNome + ' agora e ' + self.clientes[self.chave]['nick']
+                        thread_enviarMsgNvNome = enviaMsgCliente(self.clientes,oldNome + ' agora e ' + self.clientes[self.chave]['nick'], self.chave)
+                        thread_enviarMsgNvNome.start()
                     elif msg != '':
                         print self.clientes[self.chave]['nick'], 'escreveu:', msg
                         thread_enviarMsgClientes = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' escreveu: ' + msg,self.chave)
                         thread_enviarMsgClientes.start()
+                except:
+                    if self.chave not in self.clientes:
+                        conectado = False
+                        break
             else:
                 conectado = False
                 break
