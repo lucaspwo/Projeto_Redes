@@ -1,8 +1,9 @@
 import threading
 from socket import *
+import sys
 
 global conectado
-
+conectado = True
 class recebeMsg (threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
     def __init__(self,clientSocket):
@@ -12,13 +13,15 @@ class recebeMsg (threading.Thread):
     def run(self):
         global conectado
         #ouvir o que o servidor vai mandar e imprimir em tela
-        conectado = True
-        while conectado:
+        while conectado == True:
             msg = self.client_Socket.recv(2048)
-            print msg
+            # print msg
             if msg == 'sair()':
-                clientSocket.close()
                 conectado = False
+                clientSocket.close()
+                sys.exit(1)
+            else:
+                print msg
 
 
 
@@ -37,12 +40,12 @@ clientSocket.send('nome('+sentence+')')
 thread = recebeMsg (clientSocket)
 thread.start()
 
-conectado = True
 while conectado == True:
     #Parte para enviar as mensagens
     sentence = raw_input()
     clientSocket.send(sentence)
     if sentence == 'sair()':
+        conectado = False
         clientSocket.close()
         break
 # clientSocket.close()

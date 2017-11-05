@@ -1,6 +1,7 @@
 import threading
 import re
 import socket, os
+import sys
 
 global conectado
 global clientes
@@ -26,14 +27,28 @@ class recebeMsgCliente (threading.Thread):
         thread_enviar1 = enviaMsgCliente(self.client,self.client.nick+' entrou',self.client.nick)
         thread_enviar1.start()
         global conectado
-        conectado = True
+        # conectado = True
         while conectado:
             msg = self.client.client_socket.recv(2048)
             if msg == 'sair()':
-                self.client.client_connection.close()
+                self.client.client_socket.close()
                 conectado = False
                 print self.client.nick, 'saiu'
-            print self.client.nick, 'escreveu: ', msg
+                for i in clientes:
+                    if i.client_socket == self.client.client_socket:
+                        clientes.remove(i)
+            elif msg == 'lista()':
+                lista = 'Lista de usuarios:' + '\n'
+                if clientes != []:
+                    for i in clientes:
+                        lista = lista + str(i.nick) + '\n'
+                    thread_enviar2 = enviaMsgCliente(self.client,lista,self.client.nick)
+                    thread_enviar2.start()
+                        # print lista
+                else:
+                    print 'vazio'
+            else:
+                print self.client.nick, 'escreveu: ', msg
 
             # thread para enviar a mensagem recebida para todos os clientes
             thread_enviar = enviaMsgCliente(self.client,self.client.nick + ' escreveu: ' + msg,self.client.nick)
@@ -50,10 +65,11 @@ class enviaMsgCliente(threading.Thread):
         global clientes
         #percorre a lista global de clientes e envia a mensagem para todos
         #menos para quem escreveu a mensagem
-        for i in clientes:
-            if i.nick != self.nick:
-                i.client_socket.send(self.msg)
-                
+        if self.msg != 'sair()':
+            for i in clientes:
+                if i.nick != self.nick:
+                    i.client_socket.send(self.msg)
+        else self.msg 
 
 class fechaServidor (threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
@@ -65,9 +81,20 @@ class fechaServidor (threading.Thread):
         #e fecha a conexao
         msg = raw_input()
         if msg == 'sair()':
-            for i in clientes:
-                i.client_socket.send(msg)
-                i.client_socket.close()
+            if clientes != []:
+                for i in clientes:
+                    # print 'i = ' + str(i)
+                    # i.client_socket.send('Servidor fechou')
+                    i.client_socket.send(msg)
+                    i.client_socket.close()
+                    global conectado
+                    conectado = False
+            listen_socket.close()
+            sys.exit(1)
+        elif msg == 'lista()':
+            if clientes != []:
+                for i in clientes:
+                    print '('+str(i.nick)+','+str(i.address[0])+','+str(i.address[1])+')'
 
 
 HOST = '' # ip do servidor (em branco)
