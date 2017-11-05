@@ -1,6 +1,5 @@
-import threading
+import threading, sys, time
 from socket import *
-import sys
 
 global conectado
 conectado = True
@@ -13,21 +12,19 @@ class recebeMsg (threading.Thread):
     def run(self):
         global conectado
         #ouvir o que o servidor vai mandar e imprimir em tela
-        while conectado == True:
+        while conectado:
             msg = self.client_Socket.recv(2048)
             # print msg
             if msg == 'sair()':
+                print 'O servidor fechou. Pressione ENTER para sair do programa'
                 conectado = False
                 clientSocket.close()
+                # break
                 sys.exit(1)
             elif msg[:5] == 'priv=':
                 clientSocket.send(msg)
             else:
                 print msg
-
-
-
-
 
 #Parte principal
 serverName = '127.0.0.1' #inserir o ip do servidor
@@ -42,12 +39,17 @@ clientSocket.send('nome('+sentence+')')
 thread = recebeMsg (clientSocket)
 thread.start()
 
-while conectado == True:
-    #Parte para enviar as mensagens
-    sentence = raw_input()
-    clientSocket.send(sentence)
-    if sentence == 'sair()':
-        conectado = False
-        clientSocket.close()
-        break
-# clientSocket.close()
+try:
+    while conectado:
+        #Parte para enviar as mensagens
+        try:
+            sentence = raw_input()
+            clientSocket.send(sentence)
+            if sentence == 'sair()':
+                conectado = False
+                clientSocket.close()
+                break
+        except:
+            time.sleep(0.05)
+finally:
+    clientSocket.close()
