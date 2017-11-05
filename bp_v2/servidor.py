@@ -46,7 +46,7 @@ class recebeMsgCliente(threading.Thread):
                     elif msg == 'lista()':
                         lista = 'Servidor escreveu: Clientes conectados: '
                         for i in self.clientes.keys():
-                            lista = lista + self.clientes[i]['nick'] + '\t'
+                            lista = lista + '('+self.clientes[i]['nick']+','+self.clientes[i]['ip']+','+self.clientes[i]['porta']+')' + '\t'
                         self.clientes[self.chave]['socket'].send(lista)
                     elif msg[:5] == 'nome(':
                         nvNome = re.sub('nome\(','',msg)
@@ -72,17 +72,18 @@ class recebeMsgCliente(threading.Thread):
                             if pvtNome == self.clientes[i]['nick']:
                                 pvtChave = i
                         print self.clientes[self.chave]['nick'] + ' esta numa conversa privada com ' + self.clientes[pvtChave]['nick']
-                        self.clientes[self.chave]['socket'].send('Servidor escreveu: Voce entrou na conversa privada.\nEnvie \'rejeito('+ self.clientes[pvtChave]['nick'] +')\' para sair')
+                        self.clientes[self.chave]['socket'].send('Servidor escreveu: Voce entrou na conversa privada.\nEnvie \'sair(privado)\' para terminar a conversa')
                         self.clientes[pvtChave]['socket'].send('priv=1')
-                        self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' aceitou seu pedido')
-                    elif msg[:8] == 'rejeito(':
+                        self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' aceitou seu pedido.\nEnvie \'sair(privado)\' para terminar a conversa')
+                    elif msg == 'sair(privado)':
                         if privado == True:
                             privado = False
-                            print self.clientes[self.chave]['nick'] + ' nao esta mais em uma conversa privada'
+                            print self.clientes[self.chave]['nick'] + ' nao esta mais em uma conversa privada com ' + self.clientes[pvtChave]['nick']
                             self.clientes[self.chave]['socket'].send('Servidor escreveu: Voce saiu da conversa privada')
                             self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' pediu para sair da conversa privada')
                             self.clientes[pvtChave]['socket'].send('priv=0')
-                        elif privado == False:
+                    elif msg[:8] == 'rejeito(':
+                        if privado == False:
                             pvtNome = re.sub('rejeito\(','',msg)
                             pvtNome = re.sub('\)','',pvtNome)
                             for i in self.clientes.keys():
@@ -94,11 +95,12 @@ class recebeMsgCliente(threading.Thread):
                     elif msg == 'priv=0':
                         privado = False
                     elif msg != '':
-                        print self.clientes[self.chave]['nick'], 'escreveu:', msg
                         if privado == False:
+                            print self.clientes[self.chave]['nick'], 'escreveu:', msg
                             thread_enviarMsgClientes = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' escreveu: ' + msg,self.chave)
                             thread_enviarMsgClientes.start()
                         elif privado == True:
+                            print self.clientes[self.chave]['nick'], 'escreveu em chat privado:', msg
                             self.clientes[pvtChave]['socket'].send(self.clientes[self.chave]['nick'] + ' escreveu em chat privado: ' + msg)
 
                 except:
