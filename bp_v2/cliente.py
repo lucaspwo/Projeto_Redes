@@ -20,6 +20,8 @@ class recebeMsg (threading.Thread):
                 conectado = False
                 clientSocket.close()
                 sys.exit(1)
+            elif msg[:5] == 'priv=':
+                clientSocket.send(msg)
             else:
                 print msg
 
