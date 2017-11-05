@@ -34,7 +34,7 @@ serverPort = 12000
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 
-sentence = raw_input('Insira o nickname que deseja:')
+sentence = raw_input('Insira o nickname que deseja: ')
 clientSocket.send('nome('+sentence+')')
 #criar a thread de escuta
 thread = recebeMsg (clientSocket)

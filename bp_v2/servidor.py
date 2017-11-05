@@ -14,6 +14,9 @@ listen_socket.listen(1)
 
 print 'Servidor aguardando conexoes na porta %s ...' % PORT
 
+global conectado
+conectado = True
+
 class recebeMsgCliente(threading.Thread):
     def __init__(self,clientes,chave):
         threading.Thread.__init__(self)
@@ -25,26 +28,32 @@ class recebeMsgCliente(threading.Thread):
         thread_enviaEntrou.start()
         conectado = True
         while conectado:
-            msg = self.clientes[self.chave]['socket'].recv(2048)
-            if msg == 'sair()':
-                self.clientes[self.chave]['socket'].close()
-                conectado = False
-                print self.clientes[self.chave]['nick'], 'saiu'
-                thread_enviarMsgSaiu = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' saiu',self.chave)
-                thread_enviarMsgSaiu.start()
-                for i in self.clientes.keys():
-                    if self.clientes[i] == self.clientes[self.chave]:
-                        del self.clientes[i]
-                        break
-            elif msg == 'lista()':
-                lista = ''
-                for i in self.clientes.keys():
-                    lista = lista + self.clientes[i]['nick']
-                self.clientes[self.chave]['socket'].send(lista)
+            if self.chave in self.clientes:
+                try:
+                    msg = self.clientes[self.chave]['socket'].recv(2048)
+                except:
+                    if msg == 'sair()':
+                        self.clientes[self.chave]['socket'].close()
+                        conectado = False
+                        print self.clientes[self.chave]['nick'], 'saiu'
+                        thread_enviarMsgSaiu = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' saiu',self.chave)
+                        thread_enviarMsgSaiu.start()
+                        for i in self.clientes.keys():
+                            if self.clientes[i] == self.clientes[self.chave]:
+                                del self.clientes[i]
+                                break
+                    elif msg == 'lista()':
+                        lista = 'Servidor escreveu: Clientes conectados: '
+                        for i in self.clientes.keys():
+                            lista = lista + self.clientes[i]['nick'] + '\t'
+                        self.clientes[self.chave]['socket'].send(lista)
+                    elif msg != '':
+                        print self.clientes[self.chave]['nick'], 'escreveu:', msg
+                        thread_enviarMsgClientes = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' escreveu: ' + msg,self.chave)
+                        thread_enviarMsgClientes.start()
             else:
-                print self.clientes[self.chave]['nick'], 'escreveu:', msg
-                thread_enviarMsgClientes = enviaMsgCliente(self.clientes,self.clientes[self.chave]['nick'] + ' escreveu: ' + msg,self.chave)
-                thread_enviarMsgClientes.start()
+                conectado = False
+                break
 
 class enviaMsgCliente(threading.Thread):
     def __init__(self,clientes,mensagem,chave):
@@ -68,25 +77,26 @@ class servidor(threading.Thread):
         threading.Thread.__init__(self)
         self.clientes = clientes
     def run(self):
-        msg = raw_input()
-        if msg == 'sair()':
-            print 'Fechando...'
-            if bool(self.clientes) == True:
-                for i in self.clientes.keys():
-                    self.clientes[i]['socket'].send(msg)
-                    self.clientes[i]['socket'].close()
-            listen_socket.close()
-            print 'Socket fechado'
-            global conectado
-            conectado = False
-            print 'Fechou'
-            sys.exit(1)
-        elif msg == 'lista()':
-            if bool(self.clientes) == True:
-                for i in self.clientes.keys():
-                    print '('+self.clientes[i]['nick']+','+self.clientes[i]['ip']+','+self.clientes[i]['porta']+')'
-            else:
-                print 'Servidor vazio'
+        global conectado
+        while conectado:
+            msg = raw_input()
+            if msg == 'sair()':
+                print 'Fechando o servidor'
+                if bool(self.clientes) == True:
+                    for i in self.clientes.keys():
+                        self.clientes[i]['socket'].send(msg)
+                        self.clientes[i]['socket'].close()
+                        print self.clientes[i]['nick'], 'saiu'
+                        del self.clientes[i]
+                listen_socket.close()
+                conectado = False
+                # sys.exit(1)
+            elif msg == 'lista()':
+                if bool(self.clientes) == True:
+                    for i in self.clientes.keys():
+                        print '('+self.clientes[i]['nick']+','+self.clientes[i]['ip']+','+self.clientes[i]['porta']+')'
+                else:
+                    print 'Servidor vazio'
 
 clientes = {}
 
@@ -96,14 +106,11 @@ threadServ.start()
 
 conn = False
 
-global conectado
-conectado = True
-
 while conectado:
     try:
         client_connection, client_address = listen_socket.accept()
         conn = True
-        print 'Conn = ', conn
+        # print 'Conn = ', conn
     except:
         if conn == True:
             nick = client_connection.recv(2048)
@@ -112,7 +119,7 @@ while conectado:
             nome = re.sub('\)','',nome)
             #armazenar no dicionario de clientes as informacoes da conexao
             clientes.update({client_address:{'ip':str(client_address[0]), 'porta':str(client_address[1]), 'nick':nome, 'socket':client_connection}})
-            client_connection.send('Voce esta conectado')
+            client_connection.send('Servidor escreveu: Voce esta conectado')
             #crie a thread de receber mensagens de cada cliente
             threadRecebe = recebeMsgCliente(clientes,client_address)
             threadRecebe.start()
