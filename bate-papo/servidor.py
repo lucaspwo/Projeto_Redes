@@ -36,7 +36,8 @@ class recebeMsgCliente (threading.Thread):
                 print self.client.nick, 'saiu'
                 for i in clientes:
                     if i.client_socket == self.client.client_socket:
-                        clientes.remove(i)
+                        print str(clientes.pop(clientes.index(i)))
+                        # clientes.remove(i)
             elif msg == 'lista()':
                 lista = 'Lista de usuarios:' + '\n'
                 if clientes != []:
@@ -69,7 +70,7 @@ class enviaMsgCliente(threading.Thread):
             for i in clientes:
                 if i.nick != self.nick:
                     i.client_socket.send(self.msg)
-        else self.msg 
+        # else self.msg 
 
 class fechaServidor (threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
