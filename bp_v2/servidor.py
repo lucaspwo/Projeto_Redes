@@ -77,9 +77,13 @@ class recebeMsgCliente(threading.Thread):
                             for i in self.clientes.keys():
                                 if pvtNome == self.clientes[i]['nick']:
                                     pvtChave = i
-                            print self.clientes[self.chave]['nick'] + ' pediu para participar de chat privado com ' + self.clientes[pvtChave]['nick']
-                            self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' deseja iniciar uma conversa privada.\nEnvie \'aceito('+ self.clientes[self.chave]['nick'] +')\' para aceitar ou \'rejeito('+ self.clientes[self.chave]['nick'] +')\' para recusar o convite')
-                            self.clientes[pvtChave]['socket'].send('priv=2')
+                            if pvtChave == self.chave:
+                                self.clientes[self.chave]['socket'].send('Servidor escreveu: Nao e possivel criar chat privado consigo. Escolha outro usuario.')
+                            else:
+                                print self.clientes[self.chave]['nick'] + ' pediu para participar de chat privado com ' + self.clientes[pvtChave]['nick']
+                                self.clientes[self.chave]['socket'].send('Servidor escreveu: Pedido de chat privado enviado para ' + self.clientes[pvtChave]['nick'])
+                                self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' deseja iniciar uma conversa privada.\nEnvie \'aceito('+ self.clientes[self.chave]['nick'] +')\' para aceitar ou \'rejeito('+ self.clientes[self.chave]['nick'] +')\' para recusar o convite')
+                                self.clientes[pvtChave]['socket'].send('priv=2')
                         elif privado == True:
                             self.clientes[self.chave]['socket'].send('Servidor escreveu: Voce ja esta em uma conversa privada.\nApenas uma conversa privada e possivel por vez.\nTermine a conversa com \'sair(privado)\' para poder iniciar outra')
                     elif msg[:7] == 'aceito(':
@@ -115,6 +119,7 @@ class recebeMsgCliente(threading.Thread):
                                 for i in self.clientes.keys():
                                     if pvtNome == self.clientes[i]['nick']:
                                         pvtChave = i
+                                self.clientes[self.chave]['socket'].send('Servidor escreveu: Voce recusou o pedido de ' + self.clientes[pvtChave]['nick'])
                                 self.clientes[pvtChave]['socket'].send('Servidor escreveu: ' + self.clientes[self.chave]['nick'] + ' recusou seu pedido')
                                 self.clientes[pvtChave]['socket'].send('priv=3')
                         else:
