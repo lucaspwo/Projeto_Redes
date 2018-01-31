@@ -1,4 +1,4 @@
-import threading, sys, time
+import threading, os, time
 from socket import *
 
 global conectado
@@ -16,11 +16,11 @@ class recebeMsg (threading.Thread):
             msg = self.client_Socket.recv(2048)
             # print msg
             if msg == 'sair()':
-                print 'O servidor fechou. Pressione ENTER para sair do programa'
+                print 'O servidor fechou'
                 conectado = False
                 clientSocket.close()
                 # break
-                sys.exit(1)
+                os._exit(1)
             elif msg[:5] == 'priv=':
                 clientSocket.send(msg)
             else:
